@@ -1,0 +1,16 @@
+/* --- */
+/* Override Skeleton */
+.container {
+    max-width: 400px;
+}
+/* --- */
+
+body {
+    background-color: #222;
+    padding-top: 10%;
+}
+
+.container {
+    text-align: center;
+}
+

@@ -1,0 +1,39 @@
+/* --- */
+/* Override Skeleton */
+.container {
+    max-width: 1400px;
+}
+/* --- */
+
+body {
+    background-color: #222;
+    padding-top: 5%;
+    padding-bottom: 5%;
+    color: white;
+}
+
+.category-title {
+    padding-top: 10px;
+}
+
+.open-close {
+    border: 1px solid;
+    border-radius: 3px;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-bottom: 5px;
+}
+
+.category-title {
+    cursor: pointer;
+}
+
+.closed img {
+    display: none;
+}
+
+.thumbnail {
+    max-width: 24%;
+    max-height: 24%;
+}
+
