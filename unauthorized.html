@@ -18,13 +18,13 @@
 
   <!-- CSS
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link rel="stylesheet" href="css/normalize.css">
-  <link rel="stylesheet" href="css/skeleton.css">
-  <link rel="stylesheet" href="css/unauthorized.css">
+  <link rel="stylesheet" href="/css/normalize.css">
+  <link rel="stylesheet" href="/css/skeleton.css">
+  <link rel="stylesheet" href="/css/unauthorized.css">
 
   <!-- Favicon
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link rel="icon" type="image/png" href="images/favicon.png">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
 
 </head>
 <body>
@@ -39,9 +39,15 @@
   <script>
     function doSubmit() {
       let request = new XMLHttpRequest();
-      let password = document.getElementById("password").value;
-      document.cookie = `password=${document.getElementById("password").value};expires=false`
-      location.reload;
+      let input = document.getElementById("password");
+      fetch(location.pathname + `?password=${input.value}`)
+          .then(response => {
+              if (response.ok) {
+                location.reload();
+              } else {
+                input.value = "";
+              }
+            });
       return false;
     }
   </script>

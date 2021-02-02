@@ -3,71 +3,78 @@
 var http = require('http');
 var fs = require('fs');
 var path = require('path');
+var querystring = require('querystring');
 
-const BASE_PATH = ".";
-const BASE_PATH_SLASH = BASE_PATH + "/";
+const BASE_DIR = process.argv[2] || "."
 const PASSWORD = "SUPERSECRETPASSWORD";
-const unauthorised_response = fs.readFileSync(BASE_PATH_SLASH + "unauthorized.html");
 
 var notAuthenticated = function(response) {
-    response.setHeader("WWW-Authenticate", 'Basic realm="Auth"');
     response.writeHead(401, {"Content-Type": "text/html"});
-    response.end(unauthorised_response, "utf-8");
+    let data = fs.readFileSync(BASE_DIR + "/unauthorized.html");
+    response.end(data, "utf-8");
+}
+
+var notFound = function(response) {
+    response.writeHead(404, {"Content-Type": "text/html"});
+    response.end();
 }
 
 // paths allowed without authentication, regex possible
 let allowedpaths = [
-    {"path": BASE_PATH_SLASH + "css/normalize.css", "type": "text/css"},
-    {"path": BASE_PATH_SLASH + "css/skeleton.css", "type": "text/css"},
-    {"path": BASE_PATH_SLASH + "css/unauthorized.css", "type": "text/css"},
-    {"path": BASE_PATH_SLASH + "images/favicon.png", "type": "text/javascript"}
+    {"path": "/css/[^/]*.css", "type": "text/css"},
+    {"path": "/images/favicon.png", "type": "text/javascript"}
 ]
 
 var server = http.createServer(function (request, response) {
 
-    console.log(url);
-    let path = BASE_PATH + request.url.split('?')[0];
-    if (!request.headers.authorization) {
+    let url = request.url.split('?');
+    let file = url[0];
+    if (file === "/") { file = "/gallery.html" }
+    
+    // 1. User tries getting acces with password
+    // Store password in cookie if correct
+    let password = querystring.parse(url[1])["password"];
+    if (password) {
+        if (password === PASSWORD) {
+            response.setHeader("Set-Cookie", `password=${password}; Path=/`) // Session cookie
+            response.writeHead(200);
+        } else {
+            response.writeHead(401, "Wrong password");
+        }
+        response.end();
+        return;
+    }
 
-        console.log(path);
+    // 2. User tries getting file
+    let allowed = false;
+    let type = "";
+    // Extract password cookie
+    if (request.headers.cookie) {
+        password = request.headers.cookie.replace(/^(.*; )?password=([^;]*)(;.*)?$/, (match, g1, g2, g3) => g2);
+        if (request.headers.cookie.match(/(^|; )password=/) && password === PASSWORD) {
+            allowed = true;
+        }
+    }
 
-        let allowed = false;
-        let type = "";
+    if (!allowed) {
         for (allowedpath of allowedpaths) {
-            if (path.match(allowedpath["path"])) {
+            if (file.match(allowedpath["path"])) {
                 allowed = true;
                 type = allowedpath["type"];
                 break;
             }
         }
-
-        if (allowed) {
-            response.writeHead(200, {"Content-Type": type});
-            let data = fs.readFileSync(path);
-            response.end(data, "utf-8");
-        } else {
-            notAuthenticated(response);
-        }
-        return;
     }
 
-    console.log(request.headers.authorization);
-
-    let b64auth = (request.headers.authorization || '').split(' ')[1] || '';
-    let auth = Buffer.from(b64auth, 'base64').toString("utf-8");
-    let password = auth.substring(auth.indexOf(":") + 1);
-
-    console.log(password);
-
-    if (password === PASSWORD) {
-        console.log("JUIST")
-        console.log(request.headers)
-        if (path ==
-        let data = fs.readFileSync(path);
-        response.writeHead(200);
-        response.end(data, "utf-8");
+    if (allowed) {
+        try {
+            let data = fs.readFileSync(BASE_DIR + file);
+            response.writeHead(200, {"Content-Type": type});
+            response.end(data, "utf-8");
+        } catch {
+            notFound(response);
+        }
     } else {
-        console.log("FOUT")
         notAuthenticated(response);
     }
 });
